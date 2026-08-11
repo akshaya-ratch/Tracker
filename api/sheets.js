@@ -1,6 +1,7 @@
 /**
- * Vercel serverless proxy for Google Sheets (CSV + htmlview).
- * Mirrors the Vite dev proxy: /api/google-sheets/* → https://docs.google.com/*
+ * Top-level Vercel function (Vite-friendly).
+ * GET /api/sheets?id=...&gid=...          → CSV export
+ * GET /api/sheets?id=...&mode=htmlview    → htmlview (tab list)
  */
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -9,24 +10,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const parts = req.query.path
-    const path = Array.isArray(parts) ? parts.join('/') : String(parts || '')
-    if (!path || path.includes('..')) {
-      return res.status(400).json({ error: 'Invalid path' })
+    const id = String(req.query.id || '').trim()
+    const gid = String(req.query.gid || '').trim()
+    const mode = String(req.query.mode || 'csv').trim().toLowerCase()
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid spreadsheet id' })
     }
 
-    const qs = new URLSearchParams()
-    for (const [key, value] of Object.entries(req.query)) {
-      if (key === 'path') continue
-      if (Array.isArray(value)) {
-        for (const item of value) qs.append(key, String(item))
-      } else if (value != null) {
-        qs.set(key, String(value))
+    let target
+    if (mode === 'html' || mode === 'htmlview') {
+      target = `https://docs.google.com/spreadsheets/d/${id}/htmlview`
+    } else {
+      if (!/^-?\d+$/.test(gid)) {
+        return res.status(400).json({ error: 'Invalid gid' })
       }
+      target = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`
     }
-
-    const query = qs.toString()
-    const target = `https://docs.google.com/${path}${query ? `?${query}` : ''}`
 
     const upstream = await fetch(target, {
       method: 'GET',
@@ -43,9 +43,10 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', contentType)
     res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
-    res.status(upstream.status).send(body)
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    return res.status(upstream.status).send(body)
   } catch (err) {
-    res.status(502).json({
+    return res.status(502).json({
       error: 'Google Sheets proxy failed',
       detail: err?.message || String(err),
     })

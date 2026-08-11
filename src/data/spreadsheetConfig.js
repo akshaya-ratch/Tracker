@@ -8,13 +8,15 @@ export const SPREADSHEET = {
   title: 'Market Intelligence',
 }
 
-/** Dev proxy path → docs.google.com (avoids browser CORS). */
+/** Same-origin proxy → Google CSV (works in Vite dev + Vercel). */
 export function sheetCsvUrl({ id = SPREADSHEET.id, gid = SPREADSHEET.gid } = {}) {
-  return `/api/google-sheets/spreadsheets/d/${id}/export?format=csv&gid=${gid}`
+  const q = new URLSearchParams({ id, gid, mode: 'csv' })
+  return `/api/sheets?${q}`
 }
 
 export function sheetHtmlViewUrl({ id = SPREADSHEET.id } = {}) {
-  return `/api/google-sheets/spreadsheets/d/${id}/htmlview`
+  const q = new URLSearchParams({ id, mode: 'htmlview' })
+  return `/api/sheets?${q}`
 }
 
 export function sheetEditUrl({ id = SPREADSHEET.id, gid = SPREADSHEET.gid } = {}) {
