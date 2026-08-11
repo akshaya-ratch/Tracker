@@ -1,12 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
+import { AuthProvider, useAuth } from './state/AuthContext'
 import { WorkspaceProvider } from './state/WorkspaceContext'
 import Dashboard from './pages/Dashboard'
 import Companies from './pages/Companies'
 import CompanyDetails from './pages/CompanyDetails'
 import Spreadsheet from './pages/Spreadsheet'
+import Login from './pages/Login'
 
-export default function App() {
+function ProtectedApp() {
+  const { isAuthenticated } = useAuth()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+
   return (
     <WorkspaceProvider>
       <AppShell>
@@ -19,5 +24,16 @@ export default function App() {
         </Routes>
       </AppShell>
     </WorkspaceProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/*" element={<ProtectedApp />} />
+      </Routes>
+    </AuthProvider>
   )
 }

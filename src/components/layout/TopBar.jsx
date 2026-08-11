@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Avatar,
   Box,
+  Button,
   Flex,
   HStack,
   Icon,
@@ -13,11 +14,16 @@ import {
   Kbd,
   List,
   ListItem,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   Text,
   Tooltip,
   useOutsideClick,
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../state/AuthContext'
 import { useWorkspace } from '../../state/WorkspaceContext'
 import { primaryCity } from '../../data/repository'
 import { currentStage } from '../../utils/calculations'
@@ -167,6 +173,14 @@ function GlobalSearch() {
 }
 
 export default function TopBar({ onOpenSidebar }) {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <Flex
       as="header"
@@ -192,9 +206,33 @@ export default function TopBar({ onOpenSidebar }) {
       <GlobalSearch />
 
       <HStack spacing={2} ml="auto" flexShrink={0}>
-        <Tooltip label="Research workspace — single user prototype" hasArrow placement="bottom-end">
-          <Avatar size="xs" name="Ratch Research" bg="brand.600" color="white" />
-        </Tooltip>
+        <Menu placement="bottom-end">
+          <Tooltip label={user?.email || 'Account'} hasArrow placement="bottom-end">
+            <MenuButton
+              as={Button}
+              variant="ghost"
+              p={0}
+              minW="auto"
+              h="auto"
+              borderRadius="full"
+            >
+              <Avatar size="xs" name={user?.name || user?.email || 'User'} bg="brand.600" color="white" />
+            </MenuButton>
+          </Tooltip>
+          <MenuList fontSize="sm" minW="180px" borderColor="surface.border" py={1}>
+            <Box px={3} py={2} borderBottomWidth="1px" borderColor="surface.border">
+              <Text fontSize="xs" fontWeight={600} noOfLines={1}>
+                {user?.name || 'Signed in'}
+              </Text>
+              <Text fontSize="2xs" color="gray.500" noOfLines={1}>
+                {user?.email}
+              </Text>
+            </Box>
+            <MenuItem onClick={handleLogout} fontSize="sm">
+              Sign out
+            </MenuItem>
+          </MenuList>
+        </Menu>
       </HStack>
     </Flex>
   )
