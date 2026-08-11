@@ -34,7 +34,12 @@ export function parseSheetTabsFromHtml(html) {
 /** List worksheet tabs in the workbook. */
 export async function fetchSheetTabs({ id = SPREADSHEET.id } = {}) {
   const url = sheetHtmlViewUrl({ id })
-  const res = await fetch(url, { credentials: 'omit' })
+  const res = await fetch(url)
+  if (res.redirected && /vercel\.com\/sso-api/i.test(res.url)) {
+    throw new Error(
+      'This Vercel deployment is SSO-protected. Disable Deployment Protection (Vercel Authentication) for the project, or open the Production URL.',
+    )
+  }
   if (!res.ok) {
     throw new Error(`Could not load sheet tabs (${res.status}).`)
   }
@@ -56,7 +61,12 @@ export async function fetchSpreadsheetCsv(options = {}) {
   const gid = options.gid ?? SPREADSHEET.gid
   const id = options.id ?? SPREADSHEET.id
   const url = sheetCsvUrl({ id, gid })
-  const res = await fetch(url, { credentials: 'omit' })
+  const res = await fetch(url)
+  if (res.redirected && /vercel\.com\/sso-api/i.test(res.url)) {
+    throw new Error(
+      'This Vercel deployment is SSO-protected. Disable Deployment Protection (Vercel Authentication) for the project, or open the Production URL.',
+    )
+  }
 
   if (!res.ok) {
     throw new Error(`Sheet fetch failed (${res.status}).`)
