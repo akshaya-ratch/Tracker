@@ -1,9 +1,5 @@
-/**
- * Top-level Vercel function (Vite-friendly).
- * GET /api/sheets?id=...&gid=...          → CSV export
- * GET /api/sheets?id=...&mode=htmlview    → htmlview (tab list)
- */
-export default async function handler(req, res) {
+// .cjs — CommonJS so this works with package.json "type": "module"
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD')
     return res.status(405).json({ error: 'Method not allowed' })
@@ -43,7 +39,6 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', contentType)
     res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
-    res.setHeader('Access-Control-Allow-Origin', '*')
     return res.status(upstream.status).send(body)
   } catch (err) {
     return res.status(502).json({
